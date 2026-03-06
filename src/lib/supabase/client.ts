@@ -1,10 +1,24 @@
 import { createBrowserClient } from "@supabase/ssr";
 
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co";
-const supabaseAnonKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder-key";
+function getSupabaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (url) return url;
+  // Allow build-time prerendering to pass without real values
+  if (typeof window === "undefined") return "https://placeholder.supabase.co";
+  throw new Error(
+    "Missing NEXT_PUBLIC_SUPABASE_URL. Set it in your Vercel environment variables."
+  );
+}
+
+function getSupabaseAnonKey(): string {
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (key) return key;
+  if (typeof window === "undefined") return "placeholder-key";
+  throw new Error(
+    "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY. Set it in your Vercel environment variables."
+  );
+}
 
 export function createClient() {
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+  return createBrowserClient(getSupabaseUrl(), getSupabaseAnonKey());
 }
