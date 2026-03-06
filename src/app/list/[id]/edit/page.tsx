@@ -17,6 +17,7 @@ interface EditItem {
   image_url?: string | null;
   external_id: string;
   metadata: Record<string, unknown>;
+  note?: string | null;
 }
 
 export default function EditListPage() {
@@ -63,6 +64,7 @@ export default function EditListPage() {
           image_url: item.image_url,
           external_id: item.external_id || "",
           metadata: item.metadata || {},
+          note: item.note || null,
         }))
       );
       setLoading(false);
@@ -94,6 +96,7 @@ export default function EditListPage() {
         image_url: result.image_url,
         external_id: result.external_id,
         metadata: result.metadata,
+        note: result.note || null,
       },
     ]);
   }
@@ -131,6 +134,7 @@ export default function EditListPage() {
         image_url: item.image_url,
         external_id: item.external_id,
         metadata: item.metadata,
+        note: item.note || null,
       }));
 
       await supabase.from("list_items").insert(listItems);

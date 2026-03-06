@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 import { Category, SearchResult } from "@/types";
 import Image from "next/image";
 
@@ -27,12 +28,17 @@ export default function ItemSearchModal({
   onAdd,
   existingIds,
 }: ItemSearchModalProps) {
+  const [mode, setMode] = useState<"manual" | "search">("manual");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showManual, setShowManual] = useState(false);
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Manual form fields
   const [manualTitle, setManualTitle] = useState("");
   const [manualSubtitle, setManualSubtitle] = useState("");
+  const [manualImageUrl, setManualImageUrl] = useState("");
+  const [manualNote, setManualNote] = useState("");
 
   const search = useCallback(
     async (q: string) => {
@@ -42,7 +48,9 @@ export default function ItemSearchModal({
       }
       setLoading(true);
       try {
-        const res = await fetch(`${API_ROUTES[category]}?q=${encodeURIComponent(q)}`);
+        const res = await fetch(
+          `${API_ROUTES[category]}?q=${encodeURIComponent(q)}`
+        );
         const data = await res.json();
         setResults(data.results || []);
       } catch {
@@ -54,15 +62,11 @@ export default function ItemSearchModal({
     [category]
   );
 
-  // Debounced search on input change
-  const handleInputChange = useCallback(
-    (value: string) => {
-      setQuery(value);
-      const timeout = setTimeout(() => search(value), 300);
-      return () => clearTimeout(timeout);
-    },
-    [search]
-  );
+  function handleSearchInput(value: string) {
+    setQuery(value);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => search(value), 300);
+  }
 
   function handleAddManual() {
     if (!manualTitle.trim()) return;
@@ -70,23 +74,93 @@ export default function ItemSearchModal({
       external_id: `manual_${Date.now()}`,
       title: manualTitle.trim(),
       subtitle: manualSubtitle.trim() || null,
-      image_url: null,
+      image_url: manualImageUrl.trim() || null,
       metadata: { manual: true },
+      note: manualNote.trim() || null,
     });
     setManualTitle("");
     setManualSubtitle("");
-    setShowManual(false);
+    setManualImageUrl("");
+    setManualNote("");
   }
 
-  const categoryLabel = category === "tv" ? "TV show" : category === "movies" ? "movie" : "song or album";
+  const categoryLabel =
+    category === "tv"
+      ? "TV show"
+      : category === "movies"
+        ? "movie"
+        : "song or album";
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Add ${categoryLabel}`}>
-      {!showManual ? (
+      {mode === "manual" ? (
+        <div className="space-y-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Name
+            </label>
+            <Input
+              value={manualTitle}
+              onChange={(e) => setManualTitle(e.target.value)}
+              placeholder="e.g. The Shining"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Subtitle (optional)
+            </label>
+            <Input
+              value={manualSubtitle}
+              onChange={(e) => setManualSubtitle(e.target.value)}
+              placeholder="e.g. Stanley Kubrick, 1980"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Image URL (optional)
+            </label>
+            <Input
+              value={manualImageUrl}
+              onChange={(e) => setManualImageUrl(e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Notes (optional)
+            </label>
+            <textarea
+              value={manualNote}
+              onChange={(e) => setManualNote(e.target.value)}
+              placeholder="Why you love this one..."
+              rows={2}
+              maxLength={500}
+              className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setMode("search")}
+              className="flex-1"
+            >
+              Search instead
+            </Button>
+            <Button
+              onClick={handleAddManual}
+              disabled={!manualTitle.trim()}
+              className="flex-1"
+            >
+              Add item
+            </Button>
+          </div>
+        </div>
+      ) : (
         <>
           <Input
             value={query}
-            onChange={(e) => handleInputChange(e.target.value)}
+            onChange={(e) => handleSearchInput(e.target.value)}
             placeholder={`Search for a ${categoryLabel}...`}
             autoFocus
           />
@@ -169,51 +243,12 @@ export default function ItemSearchModal({
           </div>
 
           <button
-            onClick={() => setShowManual(true)}
+            onClick={() => setMode("manual")}
             className="mt-4 w-full rounded-xl border border-dashed border-zinc-300 p-3 text-center text-sm text-zinc-500 hover:border-zinc-400 hover:text-zinc-700 dark:border-zinc-700 dark:hover:border-zinc-600 dark:hover:text-zinc-300"
           >
             + Add manually
           </button>
         </>
-      ) : (
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Title
-            </label>
-            <Input
-              value={manualTitle}
-              onChange={(e) => setManualTitle(e.target.value)}
-              placeholder="Enter title"
-              autoFocus
-            />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Subtitle (optional)
-            </label>
-            <Input
-              value={manualSubtitle}
-              onChange={(e) => setManualSubtitle(e.target.value)}
-              placeholder="e.g. Director, Artist, Year"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowManual(false)}
-              className="flex-1 rounded-xl border border-zinc-200 px-4 py-2.5 text-sm text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400"
-            >
-              Back to search
-            </button>
-            <button
-              onClick={handleAddManual}
-              disabled={!manualTitle.trim()}
-              className="flex-1 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900"
-            >
-              Add item
-            </button>
-          </div>
-        </div>
       )}
     </Modal>
   );

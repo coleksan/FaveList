@@ -9,6 +9,7 @@ interface ListItemCardProps {
   title: string;
   subtitle?: string | null;
   imageUrl?: string | null;
+  note?: string | null;
   isDragging?: boolean;
   dragHandleProps?: Record<string, unknown>;
   onRemove?: () => void;
@@ -22,6 +23,7 @@ const ListItemCard = forwardRef<HTMLDivElement, ListItemCardProps>(
       title,
       subtitle,
       imageUrl,
+      note,
       isDragging,
       dragHandleProps,
       onRemove,
@@ -89,6 +91,11 @@ const ListItemCard = forwardRef<HTMLDivElement, ListItemCardProps>(
           {subtitle && (
             <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">
               {subtitle}
+            </p>
+          )}
+          {note && (
+            <p className="mt-0.5 truncate text-xs italic text-zinc-400 dark:text-zinc-500">
+              {note}
             </p>
           )}
         </div>

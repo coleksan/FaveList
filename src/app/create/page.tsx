@@ -17,6 +17,7 @@ interface DraftItem {
   image_url?: string | null;
   external_id: string;
   metadata: Record<string, unknown>;
+  note?: string | null;
 }
 
 export default function CreatePage() {
@@ -31,6 +32,7 @@ export default function CreatePage() {
   const [items, setItems] = useState<DraftItem[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   if (userLoading) {
     return (
@@ -55,6 +57,7 @@ export default function CreatePage() {
         image_url: result.image_url,
         external_id: result.external_id,
         metadata: result.metadata,
+        note: result.note || null,
       },
     ]);
   }
@@ -66,6 +69,7 @@ export default function CreatePage() {
   async function handleSave() {
     if (!category || !title.trim() || items.length === 0) return;
     setSaving(true);
+    setError("");
 
     try {
       const supabase = createClient();
@@ -95,6 +99,7 @@ export default function CreatePage() {
         image_url: item.image_url,
         external_id: item.external_id,
         metadata: item.metadata,
+        note: item.note || null,
       }));
 
       const { error: itemsError } = await supabase
@@ -105,7 +110,9 @@ export default function CreatePage() {
 
       router.push(`/list/${list.id}`);
     } catch (err) {
-      console.error("Failed to save list:", err);
+      const message =
+        err instanceof Error ? err.message : "Failed to save list";
+      setError(message);
       setSaving(false);
     }
   }
@@ -260,6 +267,12 @@ export default function CreatePage() {
               </svg>
               <p className="text-sm font-medium">Add your first item</p>
             </button>
+          )}
+
+          {error && (
+            <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+              {error}
+            </p>
           )}
 
           <div className="flex gap-3 pt-2">

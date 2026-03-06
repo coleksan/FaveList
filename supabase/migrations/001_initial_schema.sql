@@ -39,6 +39,7 @@ create table list_items (
   image_url text,
   external_id text,
   metadata jsonb default '{}',
+  note text,
   created_at timestamptz default now()
 );
 

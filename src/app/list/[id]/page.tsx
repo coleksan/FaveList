@@ -65,6 +65,7 @@ export default async function ListPage({ params }: PageProps) {
             title={item.title}
             subtitle={item.subtitle}
             imageUrl={item.image_url}
+            note={item.note}
           />
         ))}
       </div>

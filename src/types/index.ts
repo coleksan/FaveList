@@ -30,6 +30,7 @@ export interface ListItem {
   image_url: string | null;
   external_id: string | null;
   metadata: Record<string, unknown>;
+  note: string | null;
   created_at: string;
 }
 
@@ -47,6 +48,7 @@ export interface SearchResult {
   subtitle: string | null;
   image_url: string | null;
   metadata: Record<string, unknown>;
+  note?: string | null;
 }
 
 export const CATEGORIES: { value: Category; label: string; icon: string }[] = [
