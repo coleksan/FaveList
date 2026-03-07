@@ -99,8 +99,8 @@ begin
   insert into profiles (id, username, display_name, avatar_url)
   values (
     new.id,
-    lower(replace(coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)), ' ', '')),
-    coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+    lower(replace(coalesce(new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)), ' ', '')),
+    coalesce(new.raw_user_meta_data->>'display_name', new.raw_user_meta_data->>'username', split_part(new.email, '@', 1)),
     new.raw_user_meta_data->>'avatar_url'
   );
   return new;
